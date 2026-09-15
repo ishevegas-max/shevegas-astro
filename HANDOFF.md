@@ -75,6 +75,11 @@ Direct production deployment is allowed only when Michael explicitly says to put
 
 The new Astro source has been built and deployed through the connected Vercel file-deployment path. The final GitHub source-of-truth handoff is not complete until the actual `Shevegas-astro` repository is accessible and linked to `shevegas-com`.
 
+As of 2026-09-15, Vercel still reports `shevegas-com` as Git-linked to
+`SheVegas/Shevegas-democracy`. Do not push that old repository or delete it until the
+project has been unlinked or relinked to `Shevegas-astro`; either action could disturb
+the production connection.
+
 Do not create a similarly named substitute repository. Do not reconnect the old `SheVegas/Shevegas-democracy` repository as the source of the new publication.
 
 ## 7. Story migration rule

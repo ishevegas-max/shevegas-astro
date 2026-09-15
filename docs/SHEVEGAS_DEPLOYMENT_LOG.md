@@ -12,10 +12,12 @@ Normal rule: **source → check/build → preview → verify → promote exact p
 
 ## Current verification state
 
-- `https://shevegas.com`: live
-- `/stories/inside-shevegas/`: live and shareable
+- `https://shevegas.com`: HTTP 200 from Vercel; Astro title confirmed directly on 2026-09-15
+- `/stories/inside-shevegas/`: HTTP 200 from Vercel; live and shareable
 - Production alias error: none
 - `www.shevegas.com`: unresolved; returns 502 until attached and configured
+- TLS/HSTS: active on the apex (`strict-transport-security: max-age=63072000`)
+- Public search/index crawlers may still return the superseded civic-publication text until their caches refresh; direct origin requests return the Astro build.
 - Visual browser: built
 - Local Astro check: zero errors, zero warnings, zero hints after the first expansion
 - Automated visual browser pass: still required
