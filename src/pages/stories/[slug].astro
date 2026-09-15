@@ -1,0 +1,13 @@
+---
+import Publication from "../../components/Publication.astro";
+import { stories } from "../../data/stories";
+
+export function getStaticPaths() {
+  return stories.map((story) => ({ params: { slug: story.slug }, props: { slug: story.slug } }));
+}
+
+interface Props { slug: string }
+const { slug } = Astro.props;
+---
+
+<Publication initialSlug={slug} />

@@ -1,0 +1,119 @@
+---
+import { Picture } from "astro:assets";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { getStory, stories } from "../data/stories";
+
+interface Props { initialSlug?: string }
+const { initialSlug } = Astro.props;
+const initial = initialSlug ? getStory(initialSlug) : undefined;
+---
+
+<BaseLayout title={initial ? `${initial.title} — SheVegas` : undefined} description={initial?.invitation}>
+  <header class="masthead">
+    <a class="wordmark" href="/" aria-label="SheVegas home">SHE<span>VEGAS</span></a>
+    <p>Michael Brunette · Sheboygan, Wisconsin</p>
+    <button class="browse-button" type="button" data-open-browser>Browse <span aria-hidden="true">↓</span></button>
+  </header>
+
+  <main id="publication" class="publication" data-initial-story={initialSlug}>
+    {stories.map((story, index) => (
+      <article class={`visual-card tone-${story.tone}`} id={story.slug} data-card={story.slug}>
+        <Picture
+          src={story.image}
+          widths={[640, 960, 1280, 1920]}
+          sizes="100vw"
+          formats={["avif", "webp"]}
+          alt={story.alt}
+          loading={index < 2 ? "eager" : "lazy"}
+          fetchpriority={index === 0 ? "high" : "auto"}
+          class:list={["card-image", story.fit === "contain" && "contain"]}
+        />
+        <div class="shade" aria-hidden="true"></div>
+        <div class="card-copy">
+          <p class="eyebrow">{String(index + 1).padStart(2, "0")} · {story.eyebrow}</p>
+          <h1>{story.title}</h1>
+          <p class="invitation">{story.invitation}</p>
+          <button class="read-button" type="button" data-open-story={story.slug} aria-haspopup="dialog">
+            Open story <span aria-hidden="true">↘</span>
+          </button>
+        </div>
+        <span class="continue" aria-hidden="true">SWIPE · SCROLL</span>
+      </article>
+    ))}
+  </main>
+
+  <dialog class="story-browser" data-story-browser aria-labelledby="story-title">
+    <div class="browser-shell">
+      <header class="browser-header">
+        <span data-story-count></span>
+        <button type="button" data-close-story aria-label="Close story">Close ×</button>
+      </header>
+      <article class="browser-story">
+        <p class="eyebrow" data-story-eyebrow></p>
+        <h2 id="story-title" data-story-title></h2>
+        <p class="browser-dek" data-story-invitation></p>
+        <div class="browser-body" data-story-body></div>
+      </article>
+      <nav class="browser-nav" aria-label="Story navigation">
+        <button type="button" data-previous-story>← Previous</button>
+        <button type="button" data-next-story>Next story →</button>
+      </nav>
+    </div>
+  </dialog>
+
+  <script is:inline define:vars={{ stories }}>
+    const dialog = document.querySelector("[data-story-browser]");
+    const publication = document.querySelector("#publication");
+    const title = dialog.querySelector("[data-story-title]");
+    const eyebrow = dialog.querySelector("[data-story-eyebrow]");
+    const invitation = dialog.querySelector("[data-story-invitation]");
+    const body = dialog.querySelector("[data-story-body]");
+    const count = dialog.querySelector("[data-story-count]");
+    const previous = dialog.querySelector("[data-previous-story]");
+    const next = dialog.querySelector("[data-next-story]");
+    let activeIndex = 0;
+
+    function renderStory(index, updateHistory = true) {
+      activeIndex = (index + stories.length) % stories.length;
+      const story = stories[activeIndex];
+      eyebrow.textContent = story.eyebrow;
+      title.textContent = story.title;
+      invitation.textContent = story.invitation;
+      body.replaceChildren(...story.body.map((text) => Object.assign(document.createElement("p"), { textContent: text })));
+      count.textContent = `${String(activeIndex + 1).padStart(2, "0")} / ${String(stories.length).padStart(2, "0")}`;
+      next.textContent = activeIndex === stories.length - 1 ? "Return to beginning →" : "Next story →";
+      dialog.scrollTop = 0;
+      if (updateHistory) history.pushState({ story: story.slug }, "", `/stories/${story.slug}/`);
+    }
+
+    function openStory(slug, updateHistory = true) {
+      const index = stories.findIndex((story) => story.slug === slug);
+      if (index < 0) return;
+      renderStory(index, updateHistory);
+      if (!dialog.open) dialog.showModal();
+    }
+
+    function closeStory(updateHistory = true) {
+      if (dialog.open) dialog.close();
+      const story = stories[activeIndex];
+      document.querySelector(`[data-card="${story.slug}"]`)?.scrollIntoView({ block: "start" });
+      if (updateHistory) history.pushState({}, "", `/#${story.slug}`);
+    }
+
+    document.querySelectorAll("[data-open-story]").forEach((button) => {
+      button.addEventListener("click", () => openStory(button.dataset.openStory));
+    });
+    document.querySelector("[data-open-browser]")?.addEventListener("click", () => publication.scrollIntoView());
+    dialog.querySelector("[data-close-story]").addEventListener("click", () => closeStory());
+    previous.addEventListener("click", () => renderStory(activeIndex - 1));
+    next.addEventListener("click", () => renderStory(activeIndex + 1));
+    dialog.addEventListener("click", (event) => { if (event.target === dialog) closeStory(); });
+    dialog.addEventListener("cancel", (event) => { event.preventDefault(); closeStory(); });
+    window.addEventListener("popstate", () => {
+      const match = location.pathname.match(/^\/stories\/([^/]+)\/?$/);
+      if (match) openStory(match[1], false); else closeStory(false);
+    });
+    const initialSlug = publication.dataset.initialStory;
+    if (initialSlug) openStory(initialSlug, false);
+  </script>
+</BaseLayout>
